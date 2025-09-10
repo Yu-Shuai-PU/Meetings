@@ -1,0 +1,262 @@
+% Created 2025-09-09 Tue 20:34
+% Intended LaTeX compiler: pdflatex
+\documentclass[presentation]{beamer}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\usepackage{fontspec}
+\usepackage{onimage}
+\usecolortheme{princeton}
+\usetheme{Madrid}
+\setbeameroption{show notes on second screen}
+\author{Yu Shuai}
+\date{\today}
+\title{Non-intrusive model reduction of shift-equivariant systems via optimization of projection and symmetry-reduced dynamics}
+\hypersetup{
+ pdfauthor={Yu Shuai},
+ pdftitle={Non-intrusive model reduction of shift-equivariant systems via optimization of projection and symmetry-reduced dynamics},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 29.4 (Org mode 9.6.15)}, 
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+\begin{frame}{Contents}
+\tableofcontents[hideallsubsections]
+\end{frame}
+
+\section{Review: Symmetry-reduced operator inference (SR-OpInf)}
+\label{sec:org3a5ebc7}
+\begin{frame}{Contents}
+\tableofcontents[currentsection, hideothersubsections]
+\end{frame}
+
+\subsection{SR-OpInf for model reduction}
+\label{sec:orgdcaed0f}
+\begin{frame}[label={sec:orgfceba15}]{SR-OpInf for model reduction}
+\begin{itemize}[<+->]
+\item \begin{figure}[tbp]
+\centering
+\begin{tikzonimage}[width=0.9\linewidth]{figures/fig1_illustration_sropinf.png}%[tsx/show help lines]
+\end{tikzonimage}
+  \vspace{-1em}
+  \caption{Training procedure of the SR-OpInf ROM}
+  \label{fig:1_illustration_sropinf}
+\end{figure}
+\vspace{-1em}
+\item Drawbacks of the SR-OpInf algorithm
+\begin{itemize}
+\item Usage of \textcolor{blue}{orthogonal projection (insensitive to transient)}.
+\item Derivative-based loss function \textcolor{blue}{(instead of errors in $u(t)$)}
+\end{itemize}
+\end{itemize}
+\begin{LATEX}
+\note{test}
+\end{LATEX}
+\end{frame}
+
+\begin{frame}[label={sec:orgfe01da5}]{SR-OpInf for model reduction}
+\begin{itemize}
+\item \begin{figure}[tbp]
+\centering
+\begin{tikzonimage}[width=0.9\linewidth]{figures/fig1_illustration_sropinf.png}%[tsx/show help lines]
+\end{tikzonimage}
+  \vspace{-1em}
+  \caption{Training procedure of the SR-OpInf ROM}
+  \label{fig:1_illustration_sropinf}
+\end{figure}
+\vspace{-1em}
+\item Potential improvement
+\begin{itemize}
+\item Adopt the \textcolor{blue}{non-intrusive trajectory-based optimization} of ROM (\textcolor{blue}{NiTROM}, Padovan et al. 2024) to train the projection and dynamics.
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\section{Background}
+\label{sec:orga013c1e}
+\begin{frame}{Contents}
+\tableofcontents[currentsection, hideothersubsections]
+\end{frame}
+
+\subsection{Introduction to NiTROM}
+\label{sec:orgf4102ac}
+\begin{frame}[label={sec:orge056cbf}]{NiTROM: non-intrusive trajectory-based ROM}
+\begin{itemize}[<+->]
+\item Consider a general nonlinear FOM (no need to be shift-equivariant):
+\begin{equation}
+   \label{eq:1}
+   \frac{\mathrm{d}u}{\mathrm{d}t} = f(u), u\in\mathbb{R}^{n}, u(0) = u_{0}
+\end{equation}
+\item Define an oblique projection with two matrices \(\Phi, \Psi\in\mathbb{R}^{n\times r}\)
+\begin{subequations}
+\begin{align}
+  \label{eq:2}
+  a &= \Psi^{\top}u\in\mathbb{R}^{r}\\
+  u &\approx \Phi(\Psi^{\top}\Phi)^{-1}a
+\end{align}
+\end{subequations}
+\begin{itemize}
+\item If \(\Phi = \Psi\), then the projection is orthogonal (e.g., POD basis matrix)
+\end{itemize}
+\item The non-intrusive ROM then takes the form of
+\begin{subequations}
+\begin{align}
+  \label{eq:3}
+  \frac{\mathrm{d}a}{\mathrm{d}t} &= g(a), a(0) = \Psi^{\top}u(0)\\
+  u &\approx u_{r} = \Phi(\Psi^{\top}\Phi)^{-1}a
+\end{align}
+\end{subequations}
+\begin{itemize}
+\item \(g(a) = Aa + B:(aa^{\top}) = A_{ij}a_{j} + B_{ijk}a_{j}a_{k}, A\in\mathbb{R}^{r\times r}, B\in\mathbb{R}^{r\times r\times r}\).
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:org7b7723c}]{Trajectory-based optimization of non-intrusive ROM}
+\begin{itemize}[<+->]
+\item At present, the variables to be optimized are bases \(\Phi, \Psi\) and coefficients \(A, B\).
+\item However, two difficulties prevent us from updating variables in standard Euclidean space of matrices.
+\begin{itemize}
+\item \textcolor{blue}{$\Phi$ and $\Phi Q$ gives the same decoder} if \(Q\) is any invertible r-by-r matrix.
+\begin{equation}
+  \label{eq:4}
+  u_{r} = \Phi(\Psi^{\top}\Phi)^{-1}a = (\Phi Q)(\Psi^{\top}(\Phi Q))^{-1}a 
+\end{equation}
+\begin{itemize}
+\item Thus, the actual variable to be trained is the \textcolor{blue}{r-dim subspace $V$ spanned by $\Phi$}.
+\end{itemize}
+\item Both \(\Phi\) and \(\Psi\) should have full column rank to ensure \((\Psi^{\top}\Phi)^{-1}\) exists.
+\begin{itemize}
+\item A natural way is to constrain \textcolor{blue}{$\Psi$ to have orthonormal columns.}
+\end{itemize}
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:org11b1ef6}]{Trajectory-based optimization of non-intrusive ROM}
+\begin{itemize}[<+->]
+\item We now state the optimization problem as follows:
+\begin{subequations}
+\label{eq:5}
+\begin{align}
+  \underset{(V, \Psi, A, B)}{\min} J &= \sum_{m = 0}^{N_{t} - 1}\|u(t_{i}) - u_{r}(t_{i})\|^{2} \quad \text{\textcolor{blue}{(trajectory-based error)}}\\
+  s.t. \quad \frac{\mathrm{d}a}{\mathrm{d}t} &= g(a) = Aa + B:(aa^{\top}), a(t_{0}) = \Psi^{\top}u(t_{0})\\
+  u_{r} &= \Phi(\Psi^{\top}\Phi)^{-1}a\\
+  V &= \mathrm{Range}(\Phi), \mathrm{rank}(\Phi) = r, \Psi^{\top}\Psi = I_{r}.
+\end{align}
+\end{subequations}
+\item To solve this problem, we need to:
+\begin{itemize}
+\item Identify the domain (i.e. manifold) for each variable.
+\item Compute the gradient of the objective on the manifold.
+\item Update the variables while keeping them on their manifolds.
+\end{itemize}
+
+\item Toolbox: Pymanopt (Townsend et al. 2016)
+\begin{itemize}
+\item Automatically handles all these issues.
+\item Allows us to update \(V\) by updating \(\Phi\).
+\item Only needs user-input standard derivatives of \(J\) w.r.t. \((\Phi, \Psi, A, B)\).
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\section{Method}
+\label{sec:orgb47c69a}
+\begin{frame}{Contents}
+\tableofcontents[currentsection, hideothersubsections]
+\end{frame}
+
+\subsection{A symmetry-reduced NiTROM (SR-NiTROM) for shift-equivariant systems}
+\label{sec:orgd97c086}
+\begin{frame}[label={sec:orgf4136e8}]{Optimization problem of SR-NiTROM}
+\begin{itemize}[<+->]
+\item Goal: Reduce a n-dim shift-equivariant FOM to a r-dim ROM.
+\item Data: trajectory snapshots \(\{u(t_{m})\}_{m = 0}^{N_{t} - 1}\) from a shift-equivariant system. A template \(u_{0}\) for template fitting \(u\to\widehat{u}\).
+\item Objective function: trajectory-based errors of \textcolor{blue}{template-fitted profile} and \textcolor{blue}{shifting amount} 
+\begin{equation}
+  \label{eq:6}
+  J(\Phi, \Psi, A, B) = \sum_{m = 0}^{N_{t}-1} \|\widehat{u}(t_{m}) - \widehat{u}_{r}(t_{m})\|^{2} + \beta\bigg(c(t_{m}) - c_{r}(t_{m})\bigg)^{2}
+\end{equation}
+\begin{itemize}
+\item \(\beta\): relative weight \(\sim \|u\|^{2}/(dx)^{2}\)
+\end{itemize}
+\item Constraints:
+\begin{itemize}
+\item decoder \& encoded initial value: \(\widehat{u}_{r} = \Phi(\Psi^{\top}\Phi)^{-1}a\), \(a(t_{0}) = \Psi^{\top}\widehat{u}(t_{0})\)
+\item profile equation: 
+\begin{equation}
+  \label{eq:7}
+  \frac{\mathrm{d}a}{\mathrm{d}t} = Aa + B:(aa^{\top}) + \frac{\mathrm{d}c_{r}}{\mathrm{d}t}(\Psi^{\top}\partial_{x}\widehat{u}_{r})
+\end{equation}
+\item velocity equation:
+\begin{equation}
+  \label{eq:8}
+  \frac{\mathrm{d}c_{r}}{\mathrm{d}t} = -\frac{p^{\top}a + a^{\top}Qa}{\langle\partial_{x}\widehat{u}, \partial_{x}u_{0}\rangle}
+\end{equation}
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:org86dea9e}]{Optimization problem of SR-NiTROM}
+\begin{itemize}[<+->]
+\item Unconstrained optimization problem:
+\begin{align}
+    & L(\Phi, \Psi, A, B, p, Q) = \sum_{m = 0}^{N_{t} - 1} L_{m}\notag\\
+    & L_{m} = \|\Phi(\Psi^{\top}\Phi)^{-1}a(t_{m}) - \widehat{u}(t_{m})\|_{2}^{2} + \beta\bigg(c_{r}(t_{m}) - c(t_{m})\bigg)^{2}\notag\\
+    &+ \int_{t_{0}}^{t_{m}}\lambda_{m}^{\top}(t)\bigg(\frac{\mathrm{d}a}{\mathrm{d}t} - Aa - B:(aa^{\top}) - \frac{\mathrm{d}c_{r}}{\mathrm{d}t}\Psi^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a\bigg)\mathrm{d}t\notag\\
+    &+ \int_{t_{0}}^{t_{m}}\mu_{m}(t)\bigg(\frac{\mathrm{d}c_{r}}{\mathrm{d}t} + \frac{p^{\top}a + a^{\top}Qa}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle}\bigg)\mathrm{d}t\notag\\
+    &+ \lambda_{m}^{\top}(t_{0})\bigg(a(t_{0}) - \Psi^{\top}\widehat{u}(t_{0})\bigg)
+\end{align}
+\begin{itemize}
+\item \(\lambda_{m}(t)\in\mathbb{R}^{n}, \mu_{m}(t)\in\mathbb{R}\): Lagrangian multipliers.
+\item \(\partial_{a}L_{m} = 0\), \(\partial_{c_{r}}L_{m} = 0\) give adjoint equations for \(\lambda_{m}(t)\) and \(\mu_{m}(t)\).
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label={sec:orge37b609}]{Optimization problem of SR-NiTROM}
+\begin{subequations}
+\begin{align}
+\nabla_{\Phi}L_{m} &= \bigg(I - \Psi(\Phi^{\top}\Psi)^{-1}\Phi^{\top}\bigg)\bigg(2e(t_{m})a(t_{m})^{\top} - \partial_{x}^{\top}\Psi\int_{t_{0}}^{t_{m}}\frac{\mathrm{d}c_{r}}{\mathrm{d}t}\lambda_{m}a^{\top}\mathrm{d}t\notag\\
+               &- \partial_{x}^{\top}(\partial_{x}u_{0})\int_{t_{0}}^{t_{m}}\frac{\mu_{m}(p^{\top}a + a^{\top}Qa)}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle^{2}}a^{\top}\mathrm{d}t\bigg)(\Phi^{\top}\Psi)^{-1}\\
+\nabla_{\Psi}L_{m} &= -2\Phi(\Psi^{\top}\Phi)^{-1}a(t_{m})e(t_{m})^{\top}\Phi(\Psi^{\top}\Phi)^{-1}\notag\\
+               &- \int_{t_{0}}^{t_{m}}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a\lambda_{m}^{\top}\frac{\mathrm{d}c_{r}}{\mathrm{d}t}\mathrm{d}t\notag\\
+               &+ \int_{t_{0}}^{t_{m}}\Phi(\Psi^{\top}\Phi)^{-1}a\lambda_{m}^{\top}\frac{\mathrm{d}c_{r}}{\mathrm{d}t}\Psi^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}\mathrm{d}t\notag\\
+               &+ \int_{t_{0}}^{t_{m}}\Phi(\Psi^{\top}\Phi)^{-1}a\mu_{m}\frac{p^{\top}a + a^{\top}Qa}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle^{2}}(\partial_{x}u_{0})^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}\mathrm{d}t\notag\\
+               &- \hat{u}(t_{0})\lambda_{m}(t_{0})^{\top}        
+\end{align}
+\end{subequations}
+\end{frame}
+
+\begin{frame}[label={sec:orge8217c9}]{Optimization problem of SR-NiTROM}
+\begin{subequations}
+\begin{align}
+\nabla_{A}L_{m} &= -\int_{t_{0}}^{t_{m}}\lambda_{m}a^{\top}\mathrm{d}t\\
+\nabla_{B}L_{m} &= -\int_{t_{0}}^{t_{m}}\lambda_{m}\otimes a\otimes a\mathrm{d}t\\
+\nabla_{p}L_{m} &= \int_{t_{0}}^{t_{m}}\frac{\mu_{m}a}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle}\mathrm{d}t\\
+\nabla_{Q}L_{m} &= \int_{t_{0}}^{t_{m}}\frac{\mu_{m}aa^{\top}}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle}\mathrm{d}t\\       
+-\frac{\mathrm{d}\lambda_{m}}{\mathrm{d}t} &= \bigg(\frac{\partial g}{\partial a}\bigg)^{\top}\lambda_{m} - \bigg(\frac{\partial h}{\partial a}\bigg)^{\top}\mu_{m}\\
+\lambda_{m}(t_{m}) &= -2(\Phi^{\top}\Psi)^{-1}\Phi^{\top}e(t_{m})
+\end{align}
+\end{subequations}
+\end{frame}
+
+\begin{frame}[label={sec:org2639ac2}]{Optimization problem of SR-NiTROM}
+\begin{subequations}
+\begin{align}
+g(a) &= Aa + B:(aa^{\top}) + \frac{\mathrm{d}c_{r}}{\mathrm{d}t}\Psi^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a\\
+h(a) &= \frac{p^{\top}a + a^{\top}Qa}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle}\\
+\mu_{m}(t) &= \lambda_{m}^{\top}(t)\Psi^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a(t) - 2\beta(c_{r}(t_{m}) - c(t_{m}))
+\end{align}
+\end{subequations}
+\end{frame}
+\end{document}
