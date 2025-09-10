@@ -12,6 +12,9 @@
 * Review: Symmetry-reduced operator inference (SR-OpInf)
 ** SR-OpInf for model reduction
 *** SR-OpInf for model reduction
+#+BEGIN_EXPORT latex
+  \note{This is where you can put your speech draft.}
+#+END_EXPORT
 #+ATTR_BEAMER: :overlay <+->
 - \begin{figure}[tbp]
     \centering
@@ -25,9 +28,7 @@
 - Drawbacks of the SR-OpInf algorithm
   - Usage of \textcolor{blue}{orthogonal projection (insensitive to transient)}.
   - Derivative-based loss function \textcolor{blue}{(instead of errors in $u(t)$)}
-#+BEGIN_LATEX
-  \note{This is where you can put your speech draft.}
-#+END_LATEX
+
 
 *** SR-OpInf for model reduction
 - \begin{figure}[tbp]

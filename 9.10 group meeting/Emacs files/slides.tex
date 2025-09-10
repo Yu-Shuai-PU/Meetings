@@ -1,4 +1,4 @@
-% Created 2025-09-09 Tue 20:34
+% Created 2025-09-09 Tue 21:58
 % Intended LaTeX compiler: pdflatex
 \documentclass[presentation]{beamer}
 \usepackage{graphicx}
@@ -17,10 +17,10 @@
 \setbeameroption{show notes on second screen}
 \author{Yu Shuai}
 \date{\today}
-\title{Non-intrusive model reduction of shift-equivariant systems via optimization of projection and symmetry-reduced dynamics}
+\title{Non-intrusive model reduction of shift-equivariant systems via data-driven projection and reduced dynamics}
 \hypersetup{
  pdfauthor={Yu Shuai},
- pdftitle={Non-intrusive model reduction of shift-equivariant systems via optimization of projection and symmetry-reduced dynamics},
+ pdftitle={Non-intrusive model reduction of shift-equivariant systems via data-driven projection and reduced dynamics},
  pdfkeywords={},
  pdfsubject={},
  pdfcreator={Emacs 29.4 (Org mode 9.6.15)}, 
@@ -33,14 +33,23 @@
 \end{frame}
 
 \section{Review: Symmetry-reduced operator inference (SR-OpInf)}
-\label{sec:org3a5ebc7}
+\label{sec:org4c56df1}
 \begin{frame}{Contents}
 \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 
 \subsection{SR-OpInf for model reduction}
-\label{sec:orgdcaed0f}
-\begin{frame}[label={sec:orgfceba15}]{SR-OpInf for model reduction}
+\label{sec:org61097ba}
+\begin{frame}[label={sec:orgc3f05c2}]{SR-OpInf for model reduction}
+\note{Here I use this diagram to show the algorithm of symmetry-reduced operator inference.
+We start from a black-boxed full-order model partial u partial t = f(u).
+The system is shift equivariant, means that you can move your solution, and it has traveling solutions.
+We want to predict those traveling solutions uhat using a small number of modes. That's our goal.
+To do this, we train a model. We first collect some data, and then perform template fitting to align those traveling solutions against a template to remove their drifting.
+From this fitting, we can get the aligned solutions, their RHSs and the shifting amount.
+Based on this, we utilize the reconstruction equation to compute their traveling speeds.
+Once we collect these data, we now try to approximate the frozen solution profiles using POD modes, and assume a symmetry-reduced ROM based on the full-order dynamics of fitted solution uhat.
+Finally, we learn the functions.}
 \begin{itemize}[<+->]
 \item \begin{figure}[tbp]
 \centering
@@ -57,12 +66,10 @@
 \item Derivative-based loss function \textcolor{blue}{(instead of errors in $u(t)$)}
 \end{itemize}
 \end{itemize}
-\begin{LATEX}
-\note{test}
-\end{LATEX}
 \end{frame}
 
-\begin{frame}[label={sec:orgfe01da5}]{SR-OpInf for model reduction}
+
+\begin{frame}[label={sec:org1809a1d}]{SR-OpInf for model reduction}
 \begin{itemize}
 \item \begin{figure}[tbp]
 \centering
@@ -81,14 +88,14 @@
 \end{frame}
 
 \section{Background}
-\label{sec:orga013c1e}
+\label{sec:orgde72cc0}
 \begin{frame}{Contents}
 \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 
 \subsection{Introduction to NiTROM}
-\label{sec:orgf4102ac}
-\begin{frame}[label={sec:orge056cbf}]{NiTROM: non-intrusive trajectory-based ROM}
+\label{sec:org888baa8}
+\begin{frame}[label={sec:org78524fc}]{NiTROM: non-intrusive trajectory-based ROM}
 \begin{itemize}[<+->]
 \item Consider a general nonlinear FOM (no need to be shift-equivariant):
 \begin{equation}
@@ -120,7 +127,7 @@
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org7b7723c}]{Trajectory-based optimization of non-intrusive ROM}
+\begin{frame}[label={sec:orgd97de61}]{Trajectory-based optimization of non-intrusive ROM}
 \begin{itemize}[<+->]
 \item At present, the variables to be optimized are bases \(\Phi, \Psi\) and coefficients \(A, B\).
 \item However, two difficulties prevent us from updating variables in standard Euclidean space of matrices.
@@ -141,7 +148,7 @@
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org11b1ef6}]{Trajectory-based optimization of non-intrusive ROM}
+\begin{frame}[label={sec:org7be6611}]{Trajectory-based optimization of non-intrusive ROM}
 \begin{itemize}[<+->]
 \item We now state the optimization problem as follows:
 \begin{subequations}
@@ -170,21 +177,21 @@
 \end{frame}
 
 \section{Method}
-\label{sec:orgb47c69a}
+\label{sec:org6066e78}
 \begin{frame}{Contents}
 \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 
 \subsection{A symmetry-reduced NiTROM (SR-NiTROM) for shift-equivariant systems}
-\label{sec:orgd97c086}
-\begin{frame}[label={sec:orgf4136e8}]{Optimization problem of SR-NiTROM}
+\label{sec:orgae63797}
+\begin{frame}[label={sec:org110a2ea}]{Optimization problem of SR-NiTROM}
 \begin{itemize}[<+->]
 \item Goal: Reduce a n-dim shift-equivariant FOM to a r-dim ROM.
 \item Data: trajectory snapshots \(\{u(t_{m})\}_{m = 0}^{N_{t} - 1}\) from a shift-equivariant system. A template \(u_{0}\) for template fitting \(u\to\widehat{u}\).
 \item Objective function: trajectory-based errors of \textcolor{blue}{template-fitted profile} and \textcolor{blue}{shifting amount} 
 \begin{equation}
   \label{eq:6}
-  J(\Phi, \Psi, A, B) = \sum_{m = 0}^{N_{t}-1} \|\widehat{u}(t_{m}) - \widehat{u}_{r}(t_{m})\|^{2} + \beta\bigg(c(t_{m}) - c_{r}(t_{m})\bigg)^{2}
+  J(V, \Psi, A, B) = \sum_{m = 0}^{N_{t}-1} \|\widehat{u}(t_{m}) - \widehat{u}_{r}(t_{m})\|^{2} + \beta\bigg(c(t_{m}) - c_{r}(t_{m})\bigg)^{2}
 \end{equation}
 \begin{itemize}
 \item \(\beta\): relative weight \(\sim \|u\|^{2}/(dx)^{2}\)
@@ -206,7 +213,7 @@
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org86dea9e}]{Optimization problem of SR-NiTROM}
+\begin{frame}[label={sec:orga37fe8e}]{Optimization problem of SR-NiTROM}
 \begin{itemize}[<+->]
 \item Unconstrained optimization problem:
 \begin{align}
@@ -223,7 +230,7 @@
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orge37b609}]{Optimization problem of SR-NiTROM}
+\begin{frame}[label={sec:orgc3b12b8}]{Optimization problem of SR-NiTROM}
 \begin{subequations}
 \begin{align}
 \nabla_{\Phi}L_{m} &= \bigg(I - \Psi(\Phi^{\top}\Psi)^{-1}\Phi^{\top}\bigg)\bigg(2e(t_{m})a(t_{m})^{\top} - \partial_{x}^{\top}\Psi\int_{t_{0}}^{t_{m}}\frac{\mathrm{d}c_{r}}{\mathrm{d}t}\lambda_{m}a^{\top}\mathrm{d}t\notag\\
@@ -237,7 +244,7 @@
 \end{subequations}
 \end{frame}
 
-\begin{frame}[label={sec:orge8217c9}]{Optimization problem of SR-NiTROM}
+\begin{frame}[label={sec:org2aeb06d}]{Optimization problem of SR-NiTROM}
 \begin{subequations}
 \begin{align}
 \nabla_{A}L_{m} &= -\int_{t_{0}}^{t_{m}}\lambda_{m}a^{\top}\mathrm{d}t\\
@@ -250,7 +257,7 @@
 \end{subequations}
 \end{frame}
 
-\begin{frame}[label={sec:org2639ac2}]{Optimization problem of SR-NiTROM}
+\begin{frame}[label={sec:org1047fb6}]{Optimization problem of SR-NiTROM}
 \begin{subequations}
 \begin{align}
 g(a) &= Aa + B:(aa^{\top}) + \frac{\mathrm{d}c_{r}}{\mathrm{d}t}\Psi^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a\\
