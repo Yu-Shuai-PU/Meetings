@@ -1,0 +1,171 @@
+#+TITLE: Non-intrusive model reduction of shift-equivariant systems via data-driven projection and reduced dynamics
+#+AUTHOR: Yu Shuai
+#+DATE: \today
+#+LATEX_CLASS: beamer
+#+LATEX_HEADER: \usepackage{fontspec}
+#+LATEX_HEADER: \usepackage{onimage}
+#+LATEX_HEADER: \usecolortheme{princeton}
+#+LATEX_HEADER: \usetheme{Madrid}
+#+LATEX_HEADER: \setbeameroption{show notes on second screen}
+#+OPTIONS: H:3 toc:nil
+
+* Method
+** Symmetry-reduced non-intrusive trajectory-based ROM (SR-NiTROM)
+*** Formulation of the SR-NiTROM
+#+ATTR_BEAMER: :overlay <+->
+- Consider a shift-equivariant FOM with traveling solutions:
+  \begin{equation}
+     \label{eq:1}
+     u_{t} = f(u), \qquad u(x, t) = \hat{u}(x - c(t), t).
+  \end{equation}
+- Suppose we have a collection of training snapshots $\{u(t_{m})\}_{m = 0}^{N_{t}-1}$, $u(t)\in\mathbb{R}^{N}$.
+- We seek to find $\Phi, \Psi\in\mathbb{R}^{n\times r}$, such that $\Phi(\Psi^{\top}\Phi)^{-1}\Psi^{\top}$ is a projection.
+- From this projection operator, we can encode the FOM state with a low-dim representation $a(t)\in\mathbb{R}^{r}$:
+  \begin{align}
+    \label{eq:2}
+      a &= \Psi^{\top}u \notag\\
+      \hat{u}_{r} &= \Phi(\Psi^{\top}\Phi)^{-1}a.
+  \end{align}
+- The ROM dynamics is given in a symmetry-reduced form:
+  \begin{subequations}
+    \label{eq:3}
+    \begin{align}
+      \label{eq:3a}
+      \dot{a}_{i} &= A_{ij}a_{j} + B_{ijk}a_{j}a_{k} + \dot{c} M_{ij}a_{j}\\
+      \label{eq:3b}
+      \dot{c} &= -\frac{p_{i}a_{i} + Q_{ij}a_{i}a_{j}}{s_{i}a_{i}}\\
+      \label{eq:3c}
+      M &= \Psi^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}, \quad s = \langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}, \partial_{x}u_{0}\rangle
+    \end{align}
+  \end{subequations}
+  
+*** The optimization problem of SR-NiTROM
+#+ATTR_BEAMER: :overlay <+->
+- The \textcolor{blue}{trajectory-based} objective function:
+  \begin{equation}
+    \label{eq:4}
+    J = \sum_{m = 0}^{N_{t} - 1}\|\hat{u}_{r}(t_{m}) - \hat{u}(t_{m})\|^{2} + \beta(c_{r}(t_{m}) - c(t_{m}))^{2}.
+  \end{equation}
+  - $\beta = \gamma\sum_{m}\|\hat{u}(t_{m})\|^{2}/\sum_{m}(c(t_{0}) - c(t))^{2}$: relative weights.
+  - $\gamma$: hyperparameter.
+- The unconstrained Lagrangian with multipliers:
+  \begin{align}
+    \label{eq:5}
+    L &= \sum_{m = 0}^{N_{t} - 1}\bigg(\|\hat{u}_{r}(t_{m}) - \hat{u}(t_{m})\|^{2} + \beta(c_{r}(t_{m}) - c(t_{m}))\notag\\
+      &+ \int_{t_{0}}^{t_{m}}\lambda_{m}^{\top}(\dot{a} - Aa - B(a,a) - \dot{c}Ma)\mathrm{d}t\\
+      &+ \int_{t_{0}}^{t_{m}}\mu_{m}(\dot{c} + \frac{p_{i}a_{i} + Q_{ij}a_{i}a_{j}}{s_{i}a_{i}})\mathrm{d}t\\
+      &+ \lambda_{m}(t_{0})(a(t_{0}) - \Psi^{\top}\hat{u}(t_{0}))\bigg), \quad \lambda_{m}\in\mathbb{R}^{r}, \mu_{m}\in\mathbb{R}.
+  \end{align}
+
+* Results
+** Single trajectory: SR-NiTROM vs SR-Galerkin
+*** Numerical details
+#+ATTR_BEAMER: :overlay <+->
+- FOM: Kuramoto-Sivashinsky equation
+  \begin{equation}
+    \label{eq:6}
+    u_{t} = -uu_{x} - u_{xx} - \nu u_{xxxx}, \quad x\in[0, 2\pi].
+  \end{equation}
+  - $\nu = 4/87$ for traveling-wave patterns.
+  - Periodic BCs, $N=40$ Fourier modes, $\Delta t = 10^{-3}$.
+  - Sample interval: 10 timesteps between 2 adjacent snapshots.
+
+- Optimization of the SR-NiTROM:
+  - coordinate-descent method
+    conjugate gradient optimizer for each subproblems.
+  - 20 outer loops, 5 CG updates per outer loops.
+
+*** Results: single transient trajectory from t = 30 to t = 40
+#+ATTR_BEAMER: :overlay <+->
+- Relative weight: 10.0
+- FOM vs SR-Galerkin vs SR-NiTROM
+  \begin{figure}[tbp]
+      \centering
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_FOM.png}%[tsx/show help lines]
+        \node at (0.45, -0.05) {(a) FOM};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_SRG.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(b) SR-Galerkin};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_SRN.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(c) SR-NiTROM};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/shift_amount_SRN.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(d) shift amount};
+      \end{tikzonimage}
+      \label{fig:contours_single_traj_comparison_3_models}
+    \end{figure}
+
+*** Results: multiple trajectories from perturbed initial conditions
+#+ATTR_BEAMER: :overlay <+->
+- 9 trajectories
+- Initial conditions: post-transient solution snapshot + perturbations
+  $u(t = 80) + \{0, \sin(x), ..., \sin(4x), \cos(x), ..., \cos(4x)\}$.
+- Strategy A: 20 outer training loops (10 on bases, 10 on tensors), 5 CG updates per outer loop
+- Strategy B: 10 outer training loops on tensors only with fixed POD bases
+- Training loss: \textcolor{blue}{not too much difference on the training set}.
+  \begin{figure}[tbp]
+      \centering
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/training_error_both.png}%[tsx/show help lines]
+        \node at (0.45, -0.05) {(a) Strategy A};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/training_error_tensors.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(b) Strategy B};
+      \end{tikzonimage}
+      \label{fig:training_loss_both_vs_tensors_only}
+    \end{figure}
+
+*** Results: multiple trajectories from perturbed initial conditions
+#+ATTR_BEAMER: :overlay <+->
+- Trajectory 1:
+  \begin{figure}[tbp]
+      \centering
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_FOM_000.png}%[tsx/show help lines]
+        \node at (0.45, -0.05) {(a) FOM};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_SRG_000.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(b) SR-Galerkin};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_SRN_000_both.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(c) SR-NiTROM A};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_SRN_000_tensors.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(d) SR-NiTROM B};
+      \end{tikzonimage}
+      \label{fig:contours_sol_000_different_models}
+  \end{figure}
+
+*** Results: multiple trajectories from perturbed initial conditions
+#+ATTR_BEAMER: :overlay <+->
+- Trajectory 1:
+  \begin{figure}[tbp]
+      \centering
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_FOM_fitted_000.png}%[tsx/show help lines]
+        \node at (0.45, -0.05) {(a) FOM};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_SRG_fitted_000.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(b) SR-Galerkin};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_SRN_fitted_000_both.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(c) SR-NiTROM A};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_SRN_fitted_000_tensors.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(d) SR-NiTROM B};
+      \end{tikzonimage}
+      \label{fig:fitted_contours_sol_000_different_models}
+  \end{figure}
+
+*** Results: multiple trajectories from perturbed initial conditions
+#+ATTR_BEAMER: :overlay <+->
+- Trajectory 1, shift amount and shift speed:
+  \begin{figure}[tbp]
+      \centering
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/shift_amount_SRN_FOM_000_both.png}%[tsx/show help lines]
+        \node at (0.45, -0.05) {(a) Shift amounts};
+      \end{tikzonimage}
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/shift_speed_SRN_FOM_000_tensors.png}%[tsx/show help lines]
+	\node at (0.45, -0.05) {(b) Shift speeds};
+      \end{tikzonimage}
+      \label{fig:shifting_speeds_sol_000_different_models}
+  \end{figure}
+

@@ -1,0 +1,129 @@
+#+TITLE: Non-intrusive model reduction of shift-equivariant systems via data-driven projection and reduced dynamics
+#+AUTHOR: Yu Shuai
+#+DATE: \today
+#+LATEX_CLASS: beamer
+#+LATEX_HEADER: \usepackage{fontspec}
+#+LATEX_HEADER: \usepackage{onimage}
+#+LATEX_HEADER: \usecolortheme{princeton}
+#+LATEX_HEADER: \usetheme{Madrid}
+#+LATEX_HEADER: \setbeameroption{show notes on second screen}
+#+OPTIONS: H:3 toc:nil
+
+* Method
+** Symmetry-reduced non-intrusive trajectory-based ROM (SR-NiTROM)
+*** Formulation of the SR-NiTROM
+#+ATTR_BEAMER: :overlay <+->
+- Consider a shift-equivariant FOM with traveling solutions:
+  \begin{equation}
+     \label{eq:1}
+     u_{t} = f(u), \qquad u(x, t) = \hat{u}(x - c(t), t).
+  \end{equation}
+- Suppose we have a collection of training snapshots $\{u(t_{m})\}_{m = 0}^{N_{t}-1}$, $u(t)\in\mathbb{R}^{N}$.
+- We seek to find $\Phi, \Psi\in\mathbb{R}^{n\times r}$, such that $\Phi(\Psi^{\top}\Phi)^{-1}\Psi^{\top}$ is a projection.
+- From this projection operator, we can encode the FOM state with a low-dim representation $a(t)\in\mathbb{R}^{r}$:
+  \begin{align}
+    \label{eq:2}
+      a &= \Psi^{\top}u \notag\\
+      \hat{u}_{r} &= \Phi(\Psi^{\top}\Phi)^{-1}a.
+  \end{align}
+- The ROM dynamics is given in a symmetry-reduced form:
+  \begin{subequations}
+    \label{eq:3}
+    \begin{align}
+      \label{eq:3a}
+      \dot{a}_{i} &= A_{ij}a_{j} + B_{ijk}a_{j}a_{k} + \dot{c} M_{ij}a_{j}\\
+      \label{eq:3b}
+      \dot{c} &= -\frac{p_{i}a_{i} + Q_{ij}a_{i}a_{j}}{s_{i}a_{i}}\\
+      \label{eq:3c}
+      M &= \Psi^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}, \quad s = \langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}, \partial_{x}u_{0}\rangle
+    \end{align}
+  \end{subequations}
+  
+*** The optimization problem of SR-NiTROM
+#+ATTR_BEAMER: :overlay <+->
+- The \textcolor{blue}{trajectory-based} objective function:
+  \begin{equation}
+    \label{eq:4}
+    J = \sum_{m = 0}^{N_{t} - 1}\|\hat{u}_{r}(t_{m}) - \hat{u}(t_{m})\|^{2} + \beta(c_{r}(t_{m}) - c(t_{m}))^{2}.
+  \end{equation}
+  - $\beta = \gamma\sum_{m}\|\hat{u}(t_{m})\|^{2}/\sum_{m}(c(t_{0}) - c(t))^{2}$: relative weights.
+  - $\gamma$: hyperparameter.
+- The unconstrained Lagrangian with multipliers:
+  \begin{align}
+    \label{eq:5}
+    L &= \sum_{m = 0}^{N_{t} - 1}\bigg(\|\hat{u}_{r}(t_{m}) - \hat{u}(t_{m})\|^{2} + \beta_{m}(c_{r}(t_{m}) - c(t_{m}))\notag\\
+      &+ \int_{t_{0}}^{t_{m}}\lambda_{m}^{\top}(\dot{a} - Aa - B(a,a) - \dot{c}Ma)\mathrm{d}t\\
+      &+ \int_{t_{0}}^{t_{m}}\mu_{m}(\dot{c} + \frac{p_{i}a_{i} + Q_{ij}a_{i}a_{j}}{s_{i}a_{i}})\mathrm{d}t\\
+      &+ \lambda_{m}(t_{0})(a(t_{0}) - \Psi^{\top}\hat{u}(t_{0}))\bigg), \quad \lambda_{m}\in\mathbb{R}^{r}, \mu_{m}\in\mathbb{R}.
+  \end{align}
+
+* Results
+** Single trajectory: SR-NiTROM vs SR-Galerkin
+*** Numerical details
+#+ATTR_BEAMER: :overlay <+->
+- FOM: Kuramoto-Sivashinsky equation
+  \begin{equation}
+    \label{eq:6}
+    u_{t} = -uu_{x} - u_{xx} - \nu u_{xxxx}, \quad x\in[0, 2\pi].
+  \end{equation}
+  - $\nu = 4/87$ for traveling-wave patterns.
+  - Periodic BCs, $N=40$ Fourier modes, $\Delta t = 10^{-3}$.
+  - Sample interval: 10 timesteps between 2 adjacent snapshots.
+
+- Optimization of the SR-NiTROM:
+  - coordinate-descent method
+    conjugate gradient optimizer for each subproblems.
+
+*** Results
+#+ATTR_BEAMER: :overlay <+->
+- Relative weight: 10.0
+- \begin{figure}[tbp]
+  \centering
+  \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_FOM.png}[tsx/show help lines]
+    \node at (0.55, -0.05) {(a)};
+  \end{tikzonimage}
+  \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_FOM.png}[tsx/show help lines]
+    \node at (0.55, -0.05) {(a)};
+  \end{tikzonimage}
+  \begin{tikzonimage}[width=0.4\linewidth]{figures/sol_FOM.png}[tsx/show help lines]
+    \node at (0.55, -0.05) {(a)};
+  \end{tikzonimage}
+  \caption{Panel (a)-(b): spatial convergence of the explicit approach at $\nu = 1$ and $\nu = 0.01$ respectively.
+    Panel (c)-(d): temporal convergence of the explicit approach at $\nu = 1$ and $\nu = 0.01$ respectively.}
+  \label{fig:convergence_explicit}
+\end{figure}
+
+*** Optimization problem of SR-NiTROM
+\begin{subequations}
+\begin{align}
+\nabla_{\Phi}L_{m} &= \bigg(I - \Psi(\Phi^{\top}\Psi)^{-1}\Phi^{\top}\bigg)\bigg(2e(t_{m})a(t_{m})^{\top} - \partial_{x}^{\top}\Psi\int_{t_{0}}^{t_{m}}\frac{\mathrm{d}c_{r}}{\mathrm{d}t}\lambda_{m}a^{\top}\mathrm{d}t\notag\\
+               &- \partial_{x}^{\top}(\partial_{x}u_{0})\int_{t_{0}}^{t_{m}}\frac{\mu_{m}(p^{\top}a + a^{\top}Qa)}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle^{2}}a^{\top}\mathrm{d}t\bigg)(\Phi^{\top}\Psi)^{-1}\\
+\nabla_{\Psi}L_{m} &= -2\Phi(\Psi^{\top}\Phi)^{-1}a(t_{m})e(t_{m})^{\top}\Phi(\Psi^{\top}\Phi)^{-1}\notag\\
+               &- \int_{t_{0}}^{t_{m}}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a\lambda_{m}^{\top}\frac{\mathrm{d}c_{r}}{\mathrm{d}t}\mathrm{d}t\notag\\
+               &+ \int_{t_{0}}^{t_{m}}\Phi(\Psi^{\top}\Phi)^{-1}a\lambda_{m}^{\top}\frac{\mathrm{d}c_{r}}{\mathrm{d}t}\Psi^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}\mathrm{d}t\notag\\
+               &+ \int_{t_{0}}^{t_{m}}\Phi(\Psi^{\top}\Phi)^{-1}a\mu_{m}\frac{p^{\top}a + a^{\top}Qa}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle^{2}}(\partial_{x}u_{0})^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}\mathrm{d}t\notag\\
+               &- \hat{u}(t_{0})\lambda_{m}(t_{0})^{\top}        
+\end{align}
+\end{subequations}
+
+*** Optimization problem of SR-NiTROM
+\begin{subequations}
+\begin{align}
+\nabla_{A}L_{m} &= -\int_{t_{0}}^{t_{m}}\lambda_{m}a^{\top}\mathrm{d}t\\
+\nabla_{B}L_{m} &= -\int_{t_{0}}^{t_{m}}\lambda_{m}\otimes a\otimes a\mathrm{d}t\\
+\nabla_{p}L_{m} &= \int_{t_{0}}^{t_{m}}\frac{\mu_{m}a}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle}\mathrm{d}t\\
+\nabla_{Q}L_{m} &= \int_{t_{0}}^{t_{m}}\frac{\mu_{m}aa^{\top}}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle}\mathrm{d}t\\       
+-\frac{\mathrm{d}\lambda_{m}}{\mathrm{d}t} &= \bigg(\frac{\partial g}{\partial a}\bigg)^{\top}\lambda_{m} + \bigg(\frac{\partial h}{\partial a}\bigg)^{\top}\mu_{m}\\
+\lambda_{m}(t_{m}) &= -2(\Phi^{\top}\Psi)^{-1}\Phi^{\top}e(t_{m})
+\end{align}
+\end{subequations}
+
+*** Optimization problem of SR-NiTROM
+\begin{subequations}
+\begin{align}
+g(a) &= Aa + B:(aa^{\top}) + \frac{\mathrm{d}c_{r}}{\mathrm{d}t}\Psi^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a\\
+h(a) &= -\frac{p^{\top}a + a^{\top}Qa}{\langle\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a, \partial_{x}u_{0}\rangle}\\
+\mu_{m}(t) &= \lambda_{m}^{\top}(t)\Psi^{\top}\partial_{x}\Phi(\Psi^{\top}\Phi)^{-1}a(t) - 2\beta(c_{r}(t_{m}) - c(t_{m}))
+\end{align}
+\end{subequations}
+
