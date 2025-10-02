@@ -9,6 +9,8 @@
 #+LATEX_HEADER: \setbeameroption{show notes on second screen}
 #+OPTIONS: H:3 toc:nil
 
+* Before we start: SIAM meeting attendance? NWCS26 or AN26
+
 * Method
 ** Symmetry-reduced non-intrusive trajectory-based ROM (SR-NiTROM)
 *** Formulation of the SR-NiTROM
@@ -46,7 +48,7 @@
     \label{eq:4}
     J = \sum_{m = 0}^{N_{t} - 1}\|\hat{u}_{r}(t_{m}) - \hat{u}(t_{m})\|^{2} + \beta(c_{r}(t_{m}) - c(t_{m}))^{2}.
   \end{equation}
-  - $\beta = \gamma\sum_{m}\|\hat{u}(t_{m})\|^{2}/\sum_{m}(c(t_{0}) - c(t))^{2}$: relative weights.
+  - $\beta = \gamma\sum_{m}\|\hat{u}(t_{m})\|^{2}/\sum_{m}(c(t_{0}) - c(t_{m}))^{2}$: relative weights.
   - $\gamma$: hyperparameter.
 - The unconstrained Lagrangian with multipliers:
   \begin{align}
@@ -74,10 +76,12 @@
   - coordinate-descent method
     conjugate gradient optimizer for each subproblems.
   - 20 outer loops, 5 CG updates per outer loops.
+  - Initial conditions: POD bases (capturing >99.5% energy) + Galerkin-projected tensors.
+    (imitating the training result of the re-projected SR-OpInf ROM)
 
 *** Results: single transient trajectory from t = 30 to t = 40
 #+ATTR_BEAMER: :overlay <+->
-- Relative weight: 10.0
+- Relative weight: 10.0, 4-dim ROM 
 - FOM vs SR-Galerkin vs SR-NiTROM
   \begin{figure}[tbp]
       \centering
@@ -98,7 +102,7 @@
 
 *** Results: multiple trajectories from perturbed initial conditions
 #+ATTR_BEAMER: :overlay <+->
-- 9 trajectories
+- 9 trajectories, 7-dim ROM
 - Initial conditions: post-transient solution snapshot + perturbations
   $u(t = 80) + \{0, \sin(x), ..., \sin(4x), \cos(x), ..., \cos(4x)\}$.
 - Strategy A: 20 outer training loops (10 on bases, 10 on tensors), 5 CG updates per outer loop
@@ -160,12 +164,24 @@
 - Trajectory 1, shift amount and shift speed:
   \begin{figure}[tbp]
       \centering
-      \begin{tikzonimage}[width=0.4\linewidth]{figures/shift_amount_SRN_FOM_000_both.png}%[tsx/show help lines]
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/shift_amount_SRN_FOM_000.png}%[tsx/show help lines]
         \node at (0.45, -0.05) {(a) Shift amounts};
       \end{tikzonimage}
-      \begin{tikzonimage}[width=0.4\linewidth]{figures/shift_speed_SRN_FOM_000_tensors.png}%[tsx/show help lines]
-	\node at (0.45, -0.05) {(b) Shift speeds};
+      \begin{tikzonimage}[width=0.4\linewidth]{figures/shift_speed_SRN_FOM_000.png}
+        \node at (0.45, -0.05) {(a) Shift speeds};
       \end{tikzonimage}
       \label{fig:shifting_speeds_sol_000_different_models}
   \end{figure}
 
+*** Conclusions:
+#+ATTR_BEAMER: :overlay <+->
+- For the reconstruction of a single training trajectory \textcolor{blue}{including transient}, SR-NiTROM outperforms SR-Galerkin ROM (and SR-OpInf of course).
+- For the reconstruction of multiple transient trajectories, we find that:
+  - SR-NiTROM gives better approximation of template-aligned snapshots and shift amounts than the SR-Galerkin ROM.
+  - It's better to optimize both the bases and the tensors to minimize our loss function.
+  - \textcolor{blue}{However, SR-NiTROM with only trained tensors and POD bases attains the least reconstruction error of the raw snapshots.}
+    - Why: our loss function = error in aligned snapshots + error in shift amounts, not error in raw snapshots.
+    - Trade-off: we may want to switch to error in raw snapshots, but then the optimizer doesn't know if the error comes from mismatch of aligned profiles or shift amounts.
+    - This new loss function is reasonable since small shift mismatch can lead to large error in raw snapshots.
+
+- To-dos: test our SR-NiTROM on unseen trajectories. Compute the obliqueness of projection. 

@@ -1,4 +1,4 @@
-% Created 2025-10-01 Wed 23:32
+% Created 2025-10-01 Wed 23:41
 % Intended LaTeX compiler: pdflatex
 \documentclass[presentation]{beamer}
 \usepackage{graphicx}
@@ -32,15 +32,22 @@
 \tableofcontents[hideallsubsections]
 \end{frame}
 
+\section{Before we start: SIAM meeting attendance? NWCS26 or AN26}
+\label{sec:org2b20211}
+\begin{frame}{Contents}
+\tableofcontents[currentsection, hideothersubsections]
+\end{frame}
+
+
 \section{Method}
-\label{sec:org5751021}
+\label{sec:orgaef6232}
 \begin{frame}{Contents}
 \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 
 \subsection{Symmetry-reduced non-intrusive trajectory-based ROM (SR-NiTROM)}
-\label{sec:org7ff6d44}
-\begin{frame}[label={sec:org6031996}]{Formulation of the SR-NiTROM}
+\label{sec:org6c4f9ae}
+\begin{frame}[label={sec:orgd436b07}]{Formulation of the SR-NiTROM}
 \begin{itemize}[<+->]
 \item Consider a shift-equivariant FOM with traveling solutions:
 \begin{equation}
@@ -70,7 +77,7 @@
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orgdaac105}]{The optimization problem of SR-NiTROM}
+\begin{frame}[label={sec:org7d0e97e}]{The optimization problem of SR-NiTROM}
 \begin{itemize}[<+->]
 \item The \textcolor{blue}{trajectory-based} objective function:
 \begin{equation}
@@ -93,14 +100,14 @@
 \end{frame}
 
 \section{Results}
-\label{sec:org8c34e98}
+\label{sec:org88a3cc1}
 \begin{frame}{Contents}
 \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 
 \subsection{Single trajectory: SR-NiTROM vs SR-Galerkin}
-\label{sec:org591bfcd}
-\begin{frame}[label={sec:orgcef012f}]{Numerical details}
+\label{sec:org6e7ee9f}
+\begin{frame}[label={sec:orgb7ba668}]{Numerical details}
 \begin{itemize}[<+->]
 \item FOM: Kuramoto-Sivashinsky equation
 \begin{equation}
@@ -124,7 +131,7 @@ conjugate gradient optimizer for each subproblems.
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orgd9253e2}]{Results: single transient trajectory from t = 30 to t = 40}
+\begin{frame}[label={sec:org979d34b}]{Results: single transient trajectory from t = 30 to t = 40}
 \begin{itemize}[<+->]
 \item Relative weight: 10.0, 4-dim ROM
 \item FOM vs SR-Galerkin vs SR-NiTROM
@@ -147,7 +154,9 @@ conjugate gradient optimizer for each subproblems.
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orgdc7952e}]{Results: multiple trajectories from perturbed initial conditions}
+\subsection{Multiple trajectories: SR-NiTROM vs SR-Galerkin}
+\label{sec:orga83c877}
+\begin{frame}[label={sec:orgfa39b45}]{Results: multiple trajectories from perturbed initial conditions}
 \begin{itemize}[<+->]
 \item 9 trajectories, 7-dim ROM
 \item Initial conditions: post-transient solution snapshot + perturbations
@@ -168,7 +177,7 @@ conjugate gradient optimizer for each subproblems.
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:orgee2357d}]{Results: multiple trajectories from perturbed initial conditions}
+\begin{frame}[label={sec:orgaa308a2}]{Results: multiple trajectories from perturbed initial conditions}
 \begin{itemize}[<+->]
 \item Trajectory 1:
 \begin{figure}[tbp]
@@ -190,7 +199,7 @@ conjugate gradient optimizer for each subproblems.
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org36555ae}]{Results: multiple trajectories from perturbed initial conditions}
+\begin{frame}[label={sec:org8ea52ba}]{Results: multiple trajectories from perturbed initial conditions}
 \begin{itemize}[<+->]
 \item Trajectory 1:
 \begin{figure}[tbp]
@@ -212,7 +221,7 @@ conjugate gradient optimizer for each subproblems.
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org4ff17c8}]{Results: multiple trajectories from perturbed initial conditions}
+\begin{frame}[label={sec:orgf68e9e7}]{Results: multiple trajectories from perturbed initial conditions}
 \begin{itemize}[<+->]
 \item Trajectory 1, shift amount and shift speed:
 \begin{figure}[tbp]
@@ -228,7 +237,7 @@ conjugate gradient optimizer for each subproblems.
 \end{itemize}
 \end{frame}
 
-\begin{frame}[label={sec:org97b6fc2}]{Conclusions:}
+\begin{frame}[label={sec:org0029e83}]{Conclusions:}
 \begin{itemize}[<+->]
 \item For the reconstruction of a single training trajectory \textcolor{blue}{including transient}, SR-NiTROM outperforms SR-Galerkin ROM (and SR-OpInf of course).
 \item For the reconstruction of multiple transient trajectories, we find that:
